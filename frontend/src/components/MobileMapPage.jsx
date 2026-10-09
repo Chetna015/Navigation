@@ -3,7 +3,7 @@ import {
   ArrowLeft, Search, MapPin, Navigation, Compass, Layers, 
   Sparkles, Eye, Mic, X, Volume2, VolumeX, Building2,
   ChevronDown, Maximize2, RotateCcw, Languages, Bot,
-  Calendar, Sun, Moon
+  Calendar, Sun, Moon, Share2
 } from 'lucide-react';
 import DigitalTwinMap from './DigitalTwinMap';
 import NavigationSidebar from './NavigationSidebar';
@@ -31,6 +31,7 @@ export default function MobileMapPage({
   onOpen3DView,
   onOpenSBMIndoor,
   onOpenIndoor,
+  onOpenMeetMe,
   onOpenSchedule,
   onOpenStreetView,
   onOpenAIAssistant,
@@ -137,17 +138,15 @@ export default function MobileMapPage({
               <Building2 size={15} />
               <span>Indoor</span>
             </button>
-            {onOpenSchedule && (
-              <button
-                type="button"
-                className="desktop-nav-tab"
-                onClick={onOpenSchedule}
-                title="AI Summit Schedule"
-              >
-                <Calendar size={15} />
-                <span>Schedule</span>
-              </button>
-            )}
+            <button
+              type="button"
+              className="desktop-nav-tab"
+              onClick={onOpenMeetMe || onOpenSchedule}
+              title="Meet Me Here - 1-Click WhatsApp Campus Pin Sharing"
+            >
+              <Share2 size={15} color="#10B981" />
+              <span>Meet Me Here 📍</span>
+            </button>
           </div>
 
           {setTheme && (

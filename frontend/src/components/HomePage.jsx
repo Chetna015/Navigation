@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   Search, Mic, MapPin, Navigation, ArrowRight, 
   Sun, Moon, Accessibility, Footprints, X, Star, Building2, Calendar, Sparkles,
-  Bot, Volume2, VolumeX, Home, Map
+  Bot, Volume2, VolumeX, Home, Map, Share2
 } from 'lucide-react';
 import { getMergedMapLocations } from '../utils/locationStore';
 import { haversineDistanceMeters } from '../utils/haversine';
@@ -15,6 +15,7 @@ export default function HomePage({
   onOpenMap,
   onOpenAIAssistant,
   onOpenSaved,
+  onOpenMeetMe,
   onOpenSchedule,
   onOpenCampusLife,
   onOpenParking,
@@ -163,11 +164,11 @@ export default function HomePage({
             <button
               type="button"
               className="desktop-nav-tab"
-              onClick={onOpenSchedule || onOpenSessions}
-              title="AI Summit 2026 Schedule & Sessions"
+              onClick={onOpenMeetMe || onOpenSchedule}
+              title="Meet Me Here - 1-Click WhatsApp Campus Pin Sharing"
             >
-              <Calendar size={15} />
-              <span>Summit Schedule</span>
+              <Share2 size={15} color="#10B981" />
+              <span>Meet Me Here 📍</span>
             </button>
           </div>
 
@@ -388,24 +389,26 @@ export default function HomePage({
 
         {/* Responsive Banners Grid (Side-by-side on desktop, stacked on mobile) */}
         <div className="responsive-banners-grid">
-          {/* 5. AI Summit 2026 Schedule Banner Card */}
+          {/* 5. Meet Me Here (WhatsApp Campus Pin Sharing) Banner Card */}
           <section className="mobile-section">
             <div 
               className="mobile-ai-banner-card" 
-              onClick={onOpenSchedule || onOpenSessions}
+              onClick={onOpenMeetMe || onOpenSchedule}
               style={{
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(147, 51, 234, 0.12) 100%)',
-                border: '1px solid rgba(59, 130, 246, 0.25)'
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.12) 100%)',
+                border: '1px solid rgba(16, 185, 129, 0.3)'
               }}
             >
               <div className="ai-banner-left">
-                <div className="ai-avatar-badge" style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}>📅</div>
+                <div className="ai-avatar-badge" style={{ background: 'linear-gradient(135deg, #10B981, #059669)', color: '#FFF' }}>
+                  📍
+                </div>
                 <div>
-                  <h4 className="ai-banner-title">National AI Manthan 2.0 Schedule</h4>
-                  <p className="ai-banner-sub">Plenary, Agriculture, Medical & General Tracks • 12–13 Sept</p>
+                  <h4 className="ai-banner-title">Meet Me Here 📍 (WhatsApp Pin Share)</h4>
+                  <p className="ai-banner-sub">Share your exact campus location with friends in 1 click</p>
                   <div className="ai-chips-preview">
-                    <span className="ai-chip" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#2563EB', fontWeight: 600 }}>12–13 Sept 2026 • 27 Sessions</span>
-                    <span className="ai-chip" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#DC2626', fontWeight: 600 }}>🔴 Live Now</span>
+                    <span className="ai-chip" style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#059669', fontWeight: 600 }}>💬 WhatsApp 1-Click</span>
+                    <span className="ai-chip" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#2563EB', fontWeight: 600 }}>🗺️ Exact Walking Route</span>
                   </div>
                 </div>
               </div>

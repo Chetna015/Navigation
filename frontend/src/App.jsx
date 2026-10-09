@@ -16,6 +16,7 @@ import CampusLifeStatusModal from './components/CampusLifeStatusModal';
 import ParkingFinderModal from './components/ParkingFinderModal';
 import SBMBuildingIndoorModal from './components/SBMBuildingIndoorModal';
 import IndoorBuildingSelectorModal from './components/IndoorBuildingSelectorModal';
+import MeetMeHereModal from './components/MeetMeHereModal';
 import useLiveNavigationVoice from './hooks/useLiveNavigationVoice';
 import { MAP_LOCATIONS, STARTUP_STALLS } from './data/auditoriumData';
 import { useNavigation } from './context/NavigationContext';
@@ -89,6 +90,8 @@ export default function App() {
   // Modals visibility states
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showSavedModal, setShowSavedModal] = useState(false);
+  const [showMeetMeModal, setShowMeetMeModal] = useState(false);
+  const [friendMeetBanner, setFriendMeetBanner] = useState(null);
   const [showStallsModal, setShowStallsModal] = useState(false);
   const [showSessionsModal, setShowSessionsModal] = useState(false);
   const [showAccessibilityModal, setShowAccessibilityModal] = useState(false);
@@ -102,6 +105,50 @@ export default function App() {
   const [editingLocation, setEditingLocation] = useState(null);
   const [selectedStall, setSelectedStall] = useState(null);
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'campus-map'
+
+  // Automatic "Meet Me Here" Inbound Shared WhatsApp Link Parser
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const meetParam = params.get('meet');
+    const latParam = params.get('lat');
+    const lngParam = params.get('lng');
+    const nameParam = params.get('name');
+    const noteParam = params.get('note');
+    const floorParam = params.get('floor');
+
+    if (latParam && lngParam) {
+      const parsedLat = parseFloat(latParam);
+      const parsedLng = parseFloat(lngParam);
+      if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
+        const spotObj = {
+          id: meetParam || 'shared_friend_spot',
+          name: nameParam ? `${nameParam} 📍` : "Friend's Meeting Spot 📍",
+          lat: parsedLat,
+          lng: parsedLng,
+          floor: floorParam || 'outdoor',
+          customNote: noteParam || null
+        };
+        setDestination(spotObj);
+        setIsNavigatingLive(false);
+        setNavMode('preview');
+        setCurrentPage('map');
+        setFriendMeetBanner({
+          name: nameParam || "Friend's Campus Location",
+          note: noteParam || null
+        });
+      }
+    } else if (meetParam) {
+      const found = MAP_LOCATIONS.find(l => l.id === meetParam || l.code === meetParam);
+      if (found) {
+        handleSelectLocation(found);
+        setFriendMeetBanner({
+          name: found.name,
+          note: noteParam || null
+        });
+      }
+    }
+  }, []);
 
   // Dynamic Indoor Mode Switcher
   const handleOpenIndoorModal = (buildingId = 'sbm') => {
@@ -307,6 +354,37 @@ export default function App() {
         </div>
       )}
 
+      {/* 2.5 Inbound "Meet Me Here" Shared Location Banner */}
+      {friendMeetBanner && (
+        <div style={{
+          background: 'linear-gradient(90deg, #10B981 0%, #059669 100%)',
+          color: '#FFF',
+          padding: '10px 20px',
+          fontWeight: 700,
+          fontSize: '13px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          zIndex: 999
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span>📍 Friend's Location Loaded: <strong>{friendMeetBanner.name}</strong></span>
+            {friendMeetBanner.note && (
+              <span style={{ background: 'rgba(0,0,0,0.22)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
+                "{friendMeetBanner.note}"
+              </span>
+            )}
+            <span style={{ fontSize: '11px', opacity: 0.9 }}>• Walking route ready on map</span>
+          </div>
+          <button
+            onClick={() => setFriendMeetBanner(null)}
+            style={{ background: 'rgba(0,0,0,0.25)', border: 'none', color: '#FFF', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+          >
+            ✕ Dismiss
+          </button>
+        </div>
+      )}
+
       {/* 2. Primary Mobile Views (Page 1: HomePage | Page 2: MobileMapPage) */}
       <div className="mobile-view-viewport">
         {currentPage === 'home' ? (
@@ -317,6 +395,7 @@ export default function App() {
             onOpenMap={() => setCurrentPage('map')}
             onOpenAIAssistant={() => setShowAIAssistant(true)}
             onOpenSaved={() => setShowSavedModal(true)}
+            onOpenMeetMe={() => setShowMeetMeModal(true)}
             onOpenSchedule={() => setShowSessionsModal(true)}
             onOpenSessions={() => setShowSessionsModal(true)}
             onOpenCampusLife={() => setShowCampusLifeModal(true)}
@@ -350,6 +429,7 @@ export default function App() {
             onOpen3DView={(bld) => setBuilding3D(bld)}
             onOpenSBMIndoor={() => setShowSBMIndoorModal(true)}
             onOpenIndoor={() => setShowIndoorSelector(true)}
+            onOpenMeetMe={() => setShowMeetMeModal(true)}
             onOpenSchedule={() => setShowSessionsModal(true)}
             onOpenAIAssistant={() => setShowAIAssistant(true)}
             navMode={navMode}
@@ -367,12 +447,13 @@ export default function App() {
         )}
       </div>
 
-      {/* 3. Mobile Bottom Navigation Bar (Home, Map, AI Guide, Indoor Floorplans, AI Summit Schedule) */}
+      {/* 3. Mobile Bottom Navigation Bar (Home, Map, AI Guide, Indoor Floorplans, Meet Me Here) */}
       <MobileBottomNav
         currentPage={currentPage}
         onNavigateTab={(tab) => setCurrentPage(tab)}
         onOpenAIAssistant={() => setShowAIAssistant(true)}
         onOpenIndoor={() => setShowIndoorSelector(true)}
+        onOpenMeetMe={() => setShowMeetMeModal(true)}
         onOpenSchedule={() => setShowSessionsModal(true)}
         onOpenSessions={() => setShowSessionsModal(true)}
         onOpenSaved={() => setShowSavedModal(true)}
@@ -430,6 +511,19 @@ export default function App() {
         onOpenIndoorModal={handleOpenIndoorModal}
         bookmarks={bookmarks}
         onToggleBookmark={handleToggleBookmark}
+      />
+
+      {/* "Meet Me Here" WhatsApp Campus Pin Sharing Modal */}
+      <MeetMeHereModal
+        isOpen={showMeetMeModal}
+        onClose={() => setShowMeetMeModal(false)}
+        currentLocation={currentLocation}
+        destination={destination}
+        onNavigateToLocation={(spot) => {
+          handleSelectLocation(spot);
+          setShowMeetMeModal(false);
+          setCurrentPage('map');
+        }}
       />
 
       <AccessibilityModal

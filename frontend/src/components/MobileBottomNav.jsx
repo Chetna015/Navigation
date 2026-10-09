@@ -1,18 +1,21 @@
 import React from 'react';
-import { Home, Map, Bot, Building2, Calendar } from 'lucide-react';
+import { Home, Map, Bot, Building2, Share2 } from 'lucide-react';
 
 export default function MobileBottomNav({
   currentPage,
   onNavigateTab,
   onOpenAIAssistant,
   onOpenIndoor,
+  onOpenMeetMe,
   onOpenSchedule,
   onOpenSessions,
   onOpenSaved,
   hasActiveRoute
 }) {
-  const handleScheduleClick = () => {
-    if (onOpenSchedule) {
+  const handleMeetMeClick = () => {
+    if (onOpenMeetMe) {
+      onOpenMeetMe();
+    } else if (onOpenSchedule) {
       onOpenSchedule();
     } else if (onOpenSessions) {
       onOpenSessions();
@@ -76,17 +79,17 @@ export default function MobileBottomNav({
         <span className="mobile-nav-label">Indoor</span>
       </button>
 
-      {/* 5. AI Summit 2026 Schedule Tab */}
+      {/* 5. Meet Me Here (WhatsApp Pin Sharing) Tab */}
       <button
         type="button"
         className="mobile-nav-item"
-        onClick={handleScheduleClick}
-        title="AI Summit 2026 Complete Schedule"
+        onClick={handleMeetMeClick}
+        title="Meet Me Here - Share Campus Spot on WhatsApp"
       >
         <div className="mobile-nav-icon-wrap">
-          <Calendar size={20} />
+          <Share2 size={20} />
         </div>
-        <span className="mobile-nav-label">Schedule</span>
+        <span className="mobile-nav-label">Meet Me</span>
       </button>
     </nav>
   );
