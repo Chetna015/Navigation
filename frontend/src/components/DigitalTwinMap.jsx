@@ -88,6 +88,15 @@ export default function DigitalTwinMap({
     }
   };
 
+  // Window resize tracking for responsive canvas resolution
+  const [resizeCount, setResizeCount] = useState(0);
+
+  useEffect(() => {
+    const handleResize = () => setResizeCount(prev => prev + 1);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Main Canvas Rendering Loop
   useEffect(() => {
     if (viewMode !== 'twin') return;
@@ -134,7 +143,7 @@ export default function DigitalTwinMap({
     return () => {
       cancelAnimationFrame(animFrameId);
     };
-  }, [viewMode, zoom, offset, activeFloor, currentLocation, destination, shortestRoute, hoveredObject, highlightDomain, selectedStall]);
+  }, [viewMode, zoom, offset, activeFloor, currentLocation, destination, shortestRoute, hoveredObject, highlightDomain, selectedStall, resizeCount]);
 
   // --- OUTDOOR DIGITAL TWIN MAP RENDERER ---
   const drawOutdoorMap = (ctx, w, h) => {
@@ -453,7 +462,7 @@ export default function DigitalTwinMap({
   };
 
   return (
-    <div ref={containerRef} className="digital-twin-container" style={{ position: 'relative', width: '100%', height: '100%', minHeight: '560px' }}>
+    <div ref={containerRef} className="digital-twin-container" style={{ position: 'relative', width: '100%', height: '100%' }}>
 
       {/* 2. RENDER GOOGLE MAPS VIEW OR DIGITAL TWIN CANVAS VIEW */}
       {viewMode === 'google' ? (
@@ -481,7 +490,7 @@ export default function DigitalTwinMap({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onClick={handleCanvasClick}
-            style={{ width: '100%', height: '100%', minHeight: '560px', cursor: isDragging ? 'grabbing' : hoveredObject ? 'pointer' : 'grab' }}
+            style={{ width: '100%', height: '100%', cursor: isDragging ? 'grabbing' : hoveredObject ? 'pointer' : 'grab' }}
           />
 
           {/* Floating Canvas Controls */}

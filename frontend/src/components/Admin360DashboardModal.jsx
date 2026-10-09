@@ -813,15 +813,11 @@ export default function Admin360DashboardModal({
                               const newStatus = prompt("Enter Purifier Status:", wc.status);
                               if (newTemp !== null && newPurity !== null && newStatus !== null) {
                                 try {
-                                  await fetch(`${apiBase}/api/watercoolers`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      ...wc,
-                                      temperature: newTemp,
-                                      purity: newPurity,
-                                      status: newStatus
-                                    })
+                                  await apiService.saveWatercooler({
+                                    ...wc,
+                                    temperature: newTemp,
+                                    purity: newPurity,
+                                    status: newStatus
                                   });
                                   loadData();
                                   setStatusMsg({ type: 'success', text: `✅ Updated watercooler telemetry for "${wc.id}" successfully!` });

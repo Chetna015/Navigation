@@ -552,24 +552,68 @@ code, pre {
   inset: 0;
 }
 
-/* On large desktop screens, present as sleek centered mobile app frame */
+/* Responsive Desktop & Laptop Adaptations (Screens >= 769px) */
 @media (min-width: 769px) {
-  body {
-    background: #0f172a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .mobile-app-shell {
+    width: 100vw;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    position: fixed;
+    inset: 0;
   }
 
-  .mobile-app-shell {
-    position: relative;
-    max-width: 480px;
-    height: 94vh;
-    max-height: 920px;
-    margin: auto;
-    border-radius: 36px;
-    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
-    overflow: hidden;
+  /* Desktop Top Navigation Bar */
+  .mobile-top-bar {
+    height: 64px;
+    padding: 0 28px;
+    border-bottom: 1px solid var(--colors-hairline);
+  }
+
+  .mobile-brand-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .mobile-app-title {
+    font-size: 17px;
+  }
+
+  .mobile-app-subtitle {
+    font-size: 11px;
+  }
+
+  /* Hide mobile bottom navigation bar on laptop/desktop */
+  .mobile-bottom-nav {
+    display: none !important;
+  }
+
+  /* Full viewport height for map canvas on laptop/desktop */
+  .mobile-map-canvas-area {
+    padding-bottom: 0px !important;
+  }
+
+  /* Desktop Map Header */
+  .mobile-map-top-bar {
+    height: 60px;
+    padding: 0 24px;
+    gap: 16px;
+  }
+
+  .mobile-map-dest-pill {
+    max-width: 460px;
+    height: 38px;
+    padding: 0 14px;
+  }
+
+  .mobile-back-btn {
+    padding: 6px 14px;
+    font-size: 13px;
   }
 }
 
@@ -674,6 +718,72 @@ code, pre {
   transform: scale(0.95);
 }
 
+/* ==========================================================================
+   DESKTOP HEADER NAVIGATION TABS
+   ========================================================================== */
+
+.desktop-nav-tabs,
+.desktop-map-header-actions,
+.desktop-theme-btn {
+  display: none !important;
+}
+
+@media (min-width: 769px) {
+  .desktop-nav-tabs {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .desktop-map-header-actions {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .desktop-theme-btn {
+    display: flex !important;
+  }
+
+  .desktop-nav-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 9999px;
+    border: 1px solid var(--colors-hairline);
+    background-color: var(--colors-surface-soft);
+    color: var(--colors-charcoal);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-main);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  .desktop-nav-tab:hover {
+    background-color: var(--colors-canvas);
+    border-color: var(--colors-hairline-strong);
+    color: var(--colors-ink);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .desktop-nav-tab.active {
+    background-color: var(--colors-primary) !important;
+    color: var(--colors-on-primary) !important;
+    border-color: var(--colors-primary) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  [data-theme='dark'] .desktop-nav-tab.active {
+    background-color: var(--colors-primary) !important;
+    color: var(--colors-on-primary) !important;
+  }
+}
+
 /* GPS Notice Banner */
 .mobile-gps-prompt-banner {
   background: rgba(16, 185, 129, 0.12);
@@ -737,6 +847,65 @@ code, pre {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 14px 14px 76px 14px;
+}
+
+.responsive-home-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 769px) {
+  .mobile-home-scroll-area {
+    padding: 24px 32px 48px 32px;
+  }
+
+  .responsive-home-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .mobile-search-hero-card {
+    padding: 24px 28px;
+    border-radius: 20px;
+    margin-bottom: 22px;
+  }
+
+  .mobile-hero-greeting h2 {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+
+  .mobile-hero-greeting p {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .mobile-input-text {
+    font-size: 14px;
+  }
+
+  .mobile-input-row {
+    padding: 10px 14px;
+  }
+
+  .mobile-section-title {
+    font-size: 16px;
+  }
+
+  .mobile-section-subtitle {
+    font-size: 12px;
+  }
+
+  .mobile-see-map-btn {
+    font-size: 13px;
+  }
+
+  .mobile-bottom-spacer {
+    display: none;
+  }
 }
 
 /* Hero Search & Route Input Card */
@@ -1201,11 +1370,25 @@ code, pre {
   font-weight: 600;
 }
 
-/* Popular Destinations 2x Grid */
+/* Popular Destinations Grid (Responsive: 2 cols on mobile, 3 on tablet, 4 on desktop) */
 .mobile-destinations-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .mobile-destinations-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .mobile-destinations-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
 }
 
 .mobile-dest-card {
@@ -1217,7 +1400,33 @@ code, pre {
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (min-width: 769px) {
+  .mobile-dest-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .mobile-dest-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--colors-hairline-strong);
+  }
+
+  .dest-card-title {
+    font-size: 13px;
+  }
+
+  .dest-card-desc {
+    font-size: 11px;
+  }
+
+  .dest-navigate-btn {
+    padding: 4px 12px;
+    font-size: 11px;
+  }
 }
 
 .mobile-dest-card:active {
@@ -1347,6 +1556,59 @@ code, pre {
 
 .ai-banner-arrow {
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* Responsive Feature Banners Grid (Side-by-side on desktop) */
+.responsive-banners-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 769px) {
+  .responsive-banners-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    align-items: stretch;
+    margin-bottom: 18px;
+  }
+
+  .responsive-banners-grid .mobile-section {
+    margin-bottom: 0;
+    display: flex;
+  }
+
+  .mobile-ai-banner-card {
+    width: 100%;
+    padding: 20px 22px;
+    border-radius: 18px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .mobile-ai-banner-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .ai-avatar-badge {
+    width: 44px;
+    height: 44px;
+    font-size: 24px;
+  }
+
+  .ai-banner-title {
+    font-size: 15px;
+  }
+
+  .ai-banner-sub {
+    font-size: 11px;
+  }
+
+  .ai-chip {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
 }
 
 /* ==========================================================================
@@ -1602,6 +1864,31 @@ code, pre {
   border-radius: 9999px;
   background-color: var(--colors-hairline-strong);
   margin: 0 auto 4px auto;
+}
+
+@media (min-width: 769px) {
+  .mobile-map-search-overlay {
+    position: fixed !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 24px !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+
+  .mobile-map-search-sheet {
+    width: 100% !important;
+    max-width: 580px !important;
+    max-height: 82vh !important;
+    border-radius: 20px !important;
+    padding: 20px 24px 24px 24px !important;
+    border: 1px solid var(--colors-hairline-strong) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .search-sheet-handle {
+    display: none !important;
+  }
 }
 
 .search-sheet-header {

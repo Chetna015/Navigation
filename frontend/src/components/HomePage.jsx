@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   Search, Mic, MapPin, Navigation, ArrowRight, 
   Sun, Moon, Accessibility, Footprints, X, Star, Building2, Calendar, Sparkles,
-  Bot, Volume2, VolumeX
+  Bot, Volume2, VolumeX, Home, Map
 } from 'lucide-react';
 import { getMergedMapLocations } from '../utils/locationStore';
 import { haversineDistanceMeters } from '../utils/haversine';
@@ -19,6 +19,7 @@ export default function HomePage({
   onOpenCampusLife,
   onOpenParking,
   onOpenSBMIndoor,
+  onOpenIndoor,
   onOpenStalls,
   onOpenSessions,
   onOpenStreetView,
@@ -122,7 +123,55 @@ export default function HomePage({
         </div>
 
         <div className="mobile-header-actions">
-          {/* Theme Toggle Only */}
+          {/* Desktop Navigation Tabs (Hidden on Mobile) */}
+          <div className="desktop-nav-tabs">
+            <button
+              type="button"
+              className="desktop-nav-tab active"
+              title="Home Dashboard"
+            >
+              <Home size={15} />
+              <span>Home</span>
+            </button>
+            <button
+              type="button"
+              className="desktop-nav-tab"
+              onClick={onOpenMap}
+              title="Interactive Campus Map"
+            >
+              <Map size={15} />
+              <span>Campus Map</span>
+            </button>
+            <button
+              type="button"
+              className="desktop-nav-tab"
+              onClick={onOpenAIAssistant}
+              title="CSJMU AI Campus Guide"
+            >
+              <Bot size={15} color="#3B82F6" />
+              <span>AI Guide</span>
+            </button>
+            <button
+              type="button"
+              className="desktop-nav-tab"
+              onClick={onOpenIndoor || onOpenSBMIndoor}
+              title="Indoor Building Floorplans & Watercoolers"
+            >
+              <Building2 size={15} />
+              <span>Indoor Blueprints</span>
+            </button>
+            <button
+              type="button"
+              className="desktop-nav-tab"
+              onClick={onOpenSchedule || onOpenSessions}
+              title="AI Summit 2026 Schedule & Sessions"
+            >
+              <Calendar size={15} />
+              <span>Summit Schedule</span>
+            </button>
+          </div>
+
+          {/* Theme Toggle (Mobile & Desktop) */}
           <button
             type="button"
             className="mobile-header-icon-btn"
@@ -153,7 +202,8 @@ export default function HomePage({
 
       {/* Scrollable Mobile Home Content */}
       <main className="mobile-home-scroll-area">
-        {/* 2. Hero Search & Destination Box */}
+        <div className="responsive-home-content">
+          {/* 2. Hero Search & Destination Box */}
         <section className="mobile-search-hero-card">
           <div className="mobile-hero-greeting">
             <h2>Where to? 🧭</h2>
@@ -336,55 +386,59 @@ export default function HomePage({
           </div>
         </section>
 
-        {/* 5. AI Summit 2026 Schedule Banner Card */}
-        <section className="mobile-section">
-          <div 
-            className="mobile-ai-banner-card" 
-            onClick={onOpenSchedule || onOpenSessions}
-            style={{
-              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(147, 51, 234, 0.12) 100%)',
-              border: '1px solid rgba(59, 130, 246, 0.25)'
-            }}
-          >
-            <div className="ai-banner-left">
-              <div className="ai-avatar-badge" style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}>📅</div>
-              <div>
-                <h4 className="ai-banner-title">National AI Manthan 2.0 Schedule</h4>
-                <p className="ai-banner-sub">Plenary, Agriculture, Medical & General Tracks • 12–13 Sept</p>
-                <div className="ai-chips-preview">
-                  <span className="ai-chip" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#2563EB', fontWeight: 600 }}>12–13 Sept 2026 • 27 Sessions</span>
-                  <span className="ai-chip" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#DC2626', fontWeight: 600 }}>🔴 Live Now</span>
+        {/* Responsive Banners Grid (Side-by-side on desktop, stacked on mobile) */}
+        <div className="responsive-banners-grid">
+          {/* 5. AI Summit 2026 Schedule Banner Card */}
+          <section className="mobile-section">
+            <div 
+              className="mobile-ai-banner-card" 
+              onClick={onOpenSchedule || onOpenSessions}
+              style={{
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(147, 51, 234, 0.12) 100%)',
+                border: '1px solid rgba(59, 130, 246, 0.25)'
+              }}
+            >
+              <div className="ai-banner-left">
+                <div className="ai-avatar-badge" style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}>📅</div>
+                <div>
+                  <h4 className="ai-banner-title">National AI Manthan 2.0 Schedule</h4>
+                  <p className="ai-banner-sub">Plenary, Agriculture, Medical & General Tracks • 12–13 Sept</p>
+                  <div className="ai-chips-preview">
+                    <span className="ai-chip" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#2563EB', fontWeight: 600 }}>12–13 Sept 2026 • 27 Sessions</span>
+                    <span className="ai-chip" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#DC2626', fontWeight: 600 }}>🔴 Live Now</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="ai-banner-arrow">
-              <ArrowRight size={18} />
-            </div>
-          </div>
-        </section>
-
-        {/* 6. AI Assistant Interactive Banner Card */}
-        <section className="mobile-section">
-          <div className="mobile-ai-banner-card" onClick={onOpenAIAssistant}>
-            <div className="ai-banner-left">
-              <div className="ai-avatar-badge">🤖</div>
-              <div>
-                <h4 className="ai-banner-title">Need Help Finding Something?</h4>
-                <p className="ai-banner-sub">Ask our polite CSJMU AI Campus Guide with Voice</p>
-                <div className="ai-chips-preview">
-                  <span className="ai-chip">"Where is SBM-01?"</span>
-                  <span className="ai-chip">"Nearest RO Cooler"</span>
-                </div>
+              <div className="ai-banner-arrow">
+                <ArrowRight size={18} />
               </div>
             </div>
-            <div className="ai-banner-arrow">
-              <ArrowRight size={18} />
-            </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Padding spacer at bottom for mobile nav bar */}
-        <div style={{ height: '80px' }} />
+          {/* 6. AI Assistant Interactive Banner Card */}
+          <section className="mobile-section">
+            <div className="mobile-ai-banner-card" onClick={onOpenAIAssistant}>
+              <div className="ai-banner-left">
+                <div className="ai-avatar-badge">🤖</div>
+                <div>
+                  <h4 className="ai-banner-title">Need Help Finding Something?</h4>
+                  <p className="ai-banner-sub">Ask our polite CSJMU AI Campus Guide with Voice</p>
+                  <div className="ai-chips-preview">
+                    <span className="ai-chip">"Where is SBM-01?"</span>
+                    <span className="ai-chip">"Nearest RO Cooler"</span>
+                  </div>
+                </div>
+              </div>
+              <div className="ai-banner-arrow">
+                <ArrowRight size={18} />
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      {/* Padding spacer at bottom for mobile nav bar */}
+      <div className="mobile-bottom-spacer" style={{ height: '80px' }} />
       </main>
     </div>
   );

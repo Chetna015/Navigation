@@ -322,6 +322,7 @@ export default function App() {
             onOpenCampusLife={() => setShowCampusLifeModal(true)}
             onOpenParking={() => setShowParkingModal(true)}
             onOpenSBMIndoor={() => setShowSBMIndoorModal(true)}
+            onOpenIndoor={() => setShowIndoorSelector(true)}
             onOpenStalls={() => setShowStallsModal(true)}
             onOpenAccessibility={() => setShowAccessibilityModal(true)}
             theme={theme}
@@ -348,6 +349,8 @@ export default function App() {
             onOpenEditLocation={handleOpenEditLocation}
             onOpen3DView={(bld) => setBuilding3D(bld)}
             onOpenSBMIndoor={() => setShowSBMIndoorModal(true)}
+            onOpenIndoor={() => setShowIndoorSelector(true)}
+            onOpenSchedule={() => setShowSessionsModal(true)}
             onOpenAIAssistant={() => setShowAIAssistant(true)}
             navMode={navMode}
             setNavMode={setNavMode}
@@ -358,6 +361,8 @@ export default function App() {
             setVoiceEnabled={setVoiceEnabled}
             isListening={isListening}
             startVoiceSearch={startVoiceSearch}
+            theme={theme}
+            setTheme={setTheme}
           />
         )}
       </div>

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   ArrowLeft, Search, MapPin, Navigation, Compass, Layers, 
   Sparkles, Eye, Mic, X, Volume2, VolumeX, Building2,
-  ChevronDown, Maximize2, RotateCcw, Languages, Bot
+  ChevronDown, Maximize2, RotateCcw, Languages, Bot,
+  Calendar, Sun, Moon
 } from 'lucide-react';
 import DigitalTwinMap from './DigitalTwinMap';
 import NavigationSidebar from './NavigationSidebar';
@@ -29,12 +30,16 @@ export default function MobileMapPage({
   onOpenEditLocation,
   onOpen3DView,
   onOpenSBMIndoor,
+  onOpenIndoor,
+  onOpenSchedule,
   onOpenStreetView,
   onOpenAIAssistant,
   voiceEnabled: propVoiceEnabled,
   setVoiceEnabled: propSetVoiceEnabled,
   isListening,
-  startVoiceSearch
+  startVoiceSearch,
+  theme,
+  setTheme
 }) {
   const { 
     voiceEnabled, toggleVoice, 
@@ -111,6 +116,51 @@ export default function MobileMapPage({
           )}
         </div>
 
+        {/* Desktop Navigation Links & Controls (Hidden on Mobile) */}
+        <div className="desktop-map-header-actions">
+          <div className="desktop-nav-tabs">
+            <button
+              type="button"
+              className="desktop-nav-tab"
+              onClick={onOpenAIAssistant}
+              title="CSJMU AI Campus Guide"
+            >
+              <Bot size={15} color="#3B82F6" />
+              <span>AI Guide</span>
+            </button>
+            <button
+              type="button"
+              className="desktop-nav-tab"
+              onClick={onOpenIndoor || onOpenSBMIndoor}
+              title="Indoor Building Floorplans & Watercoolers"
+            >
+              <Building2 size={15} />
+              <span>Indoor</span>
+            </button>
+            {onOpenSchedule && (
+              <button
+                type="button"
+                className="desktop-nav-tab"
+                onClick={onOpenSchedule}
+                title="AI Summit Schedule"
+              >
+                <Calendar size={15} />
+                <span>Schedule</span>
+              </button>
+            )}
+          </div>
+
+          {setTheme && (
+            <button
+              type="button"
+              className="mobile-header-icon-btn desktop-theme-btn"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              title="Toggle Light/Dark Theme"
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          )}
+        </div>
       </header>
 
       {/* 2. Interactive Vector & Satellite Digital Twin Map */}
