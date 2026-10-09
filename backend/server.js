@@ -5,6 +5,8 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 // Resolve current directory path for ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -12,6 +14,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+const JWT_SECRET = process.env.JWT_SECRET || 'csjmu_smart_campus_jwt_secret_key_2026';
 
 app.use(cors());
 app.use(express.json());
@@ -34,17 +37,56 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
-// Configure Multer for File Uploads (360 Panoramas, Photos, Videos)
+// Configure Multer with strict MIME validation (Images & 360 Panoramas only)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    const sanitizedExt = path.extname(file.originalname).toLowerCase();
+    cb(null, file.fieldname + '-' + uniqueSuffix + sanitizedExt);
   }
 });
-const upload = multer({ storage: storage });
+
+const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const fileFilter = (req, file, cb) => {
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type! Only JPG, PNG, and WebP images are allowed.'), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: fileFilter
+});
+
+// Authentication Middleware to protect Admin-only operations
+const authenticateAdmin = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer <token>
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      error: 'Access Denied: Admin authentication token required. Only authorized campus administrators can pin or delete locations.'
+    });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access Denied: Invalid or expired admin credentials session.'
+      });
+    }
+    req.user = user;
+    next();
+  });
+};
 
 // Database initialization
 function initializeDatabase() {
@@ -114,13 +156,17 @@ function initializeDatabase() {
       )
     `);
 
-    // Seed Default Admin Creds (admin / admin2026)
+    // Seed Default Admin Creds with Bcrypt Hashing (admin / admin2026)
     db.get("SELECT * FROM admins WHERE username = 'admin'", (err, row) => {
+      const defaultHash = bcrypt.hashSync('admin2026', 10);
       if (!row) {
         db.run(
           "INSERT INTO admins (id, username, password, role) VALUES (?, ?, ?, ?)",
-          ['usr_admin_default', 'admin', 'admin2026', 'superadmin']
+          ['usr_admin_default', 'admin', defaultHash, 'superadmin']
         );
+      } else if (!row.password.startsWith('$2a$') && !row.password.startsWith('$2b$')) {
+        // Automatically upgrade existing plain-text password to bcrypt hash
+        db.run("UPDATE admins SET password = ? WHERE id = ?", [defaultHash, row.id]);
       }
     });
 
@@ -159,8 +205,59 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'CSJMU Smart Campus SQLite Backend API Operational 🚀' });
 });
 
-// File Upload Handler (Returns path to static file URL)
-app.post('/api/upload', upload.single('file'), (req, res) => {
+// Admin Login (Issues JWT Token)
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: 'Username and password are required' });
+  }
+
+  db.get("SELECT * FROM admins WHERE username = ?", [username], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: 'Database error' });
+    }
+    if (!row) {
+      return res.status(401).json({ success: false, message: 'Invalid Admin credentials!' });
+    }
+
+    // Verify password via bcrypt or legacy plain-text fallback
+    const isPasswordValid = bcrypt.compareSync(password, row.password) || password === row.password;
+    if (!isPasswordValid) {
+      return res.status(401).json({ success: false, message: 'Invalid Admin credentials!' });
+    }
+
+    // Generate signed JWT token valid for 24 hours
+    const token = jwt.sign(
+      { id: row.id, username: row.username, role: row.role },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      success: true,
+      token,
+      user: { id: row.id, username: row.username, role: row.role }
+    });
+  });
+});
+
+// Verify Current Admin Token
+app.get('/api/auth/verify', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, error: 'No token provided' });
+  }
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ success: false, error: 'Invalid or expired token' });
+    }
+    res.json({ success: true, user });
+  });
+});
+
+// File Upload Handler (Protected: Only Admins can upload photos/panoramas)
+app.post('/api/upload', authenticateAdmin, upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
@@ -168,22 +265,7 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
   res.json({ success: true, url: fileUrl });
 });
 
-// Admin Login
-app.post('/api/auth/login', (req, res) => {
-  const { username, password } = req.body;
-  db.get("SELECT * FROM admins WHERE username = ? AND password = ?", [username, password], (err, row) => {
-    if (err) {
-      return res.status(500).json({ error: 'Database error' });
-    }
-    if (row) {
-      res.json({ success: true, user: { username: row.username, role: row.role } });
-    } else {
-      res.status(401).json({ success: false, message: 'Invalid Admin credentials!' });
-    }
-  });
-});
-
-// Locations API (GET, POST, DELETE)
+// Locations API (GET: Public for students/visitors, POST/DELETE: Admin Only)
 app.get('/api/locations', (req, res) => {
   db.all("SELECT * FROM locations", [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -191,8 +273,14 @@ app.get('/api/locations', (req, res) => {
   });
 });
 
-app.post('/api/locations', (req, res) => {
+// Protected: Only Admin can pin / save new locations
+app.post('/api/locations', authenticateAdmin, (req, res) => {
   const { id, name, code, category, lat, lng, x, y, floors, description, cover_image, video_url } = req.body;
+  if (!name || lat === undefined || lng === undefined) {
+    return res.status(400).json({ success: false, error: 'Location name, latitude, and longitude are required.' });
+  }
+
+  const locationId = id || `loc_custom_${Date.now()}`;
   const sql = `
     INSERT INTO locations (id, name, code, category, lat, lng, x, y, floors, description, cover_image, video_url, is_custom)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
@@ -202,16 +290,24 @@ app.post('/api/locations', (req, res) => {
       floors=excluded.floors, description=excluded.description,
       cover_image=excluded.cover_image, video_url=excluded.video_url
   `;
-  db.run(sql, [id, name, code, category, lat, lng, x, y, floors, description, cover_image, video_url], function(err) {
+  db.run(sql, [locationId, name, code, category, lat, lng, x, y, floors, description, cover_image, video_url], function(err) {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ success: true, id: id });
+    res.json({
+      success: true,
+      id: locationId,
+      location: {
+        id: locationId,
+        name, code, category, lat, lng, x, y, floors, description, cover_image, video_url, is_custom: 1
+      }
+    });
   });
 });
 
-app.delete('/api/locations/:id', (req, res) => {
+// Protected: Only Admin can delete locations
+app.delete('/api/locations/:id', authenticateAdmin, (req, res) => {
   db.run("DELETE FROM locations WHERE id = ?", [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ success: true });
+    res.json({ success: true, id: req.params.id });
   });
 });
 
@@ -223,7 +319,8 @@ app.get('/api/rooms', (req, res) => {
   });
 });
 
-app.post('/api/rooms', (req, res) => {
+// Protected: Only Admin can add/update rooms
+app.post('/api/rooms', authenticateAdmin, (req, res) => {
   const { id, location_id, floor_level, name, type, capacity, equipment, current_event, status, coord_x, coord_y } = req.body;
   const sql = `
     INSERT INTO rooms (id, location_id, floor_level, name, type, capacity, equipment, current_event, status, coord_x, coord_y)
@@ -240,7 +337,8 @@ app.post('/api/rooms', (req, res) => {
   });
 });
 
-app.delete('/api/rooms/:id', (req, res) => {
+// Protected: Only Admin can delete rooms
+app.delete('/api/rooms/:id', authenticateAdmin, (req, res) => {
   db.run("DELETE FROM rooms WHERE id = ?", [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
@@ -255,7 +353,8 @@ app.get('/api/watercoolers', (req, res) => {
   });
 });
 
-app.post('/api/watercoolers', (req, res) => {
+// Protected: Only Admin can add/update watercoolers
+app.post('/api/watercoolers', authenticateAdmin, (req, res) => {
   const { id, location_id, floor_level, name, type, temperature, purity, capacity, status, image, location_description, coord_x, coord_y } = req.body;
   const sql = `
     INSERT INTO water_coolers (id, location_id, floor_level, name, type, temperature, purity, capacity, status, image, location_description, coord_x, coord_y)
@@ -272,7 +371,8 @@ app.post('/api/watercoolers', (req, res) => {
   });
 });
 
-app.delete('/api/watercoolers/:id', (req, res) => {
+// Protected: Only Admin can delete watercoolers
+app.delete('/api/watercoolers/:id', authenticateAdmin, (req, res) => {
   db.run("DELETE FROM water_coolers WHERE id = ?", [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });

@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { isAdminAuthenticated } from '../services/api';
+import { syncLocationsFromServer } from '../utils/locationStore';
 
 const NavigationContext = createContext();
 
@@ -37,7 +39,7 @@ export function NavigationProvider({ children }) {
   const [shortestRoute, setShortestRoute] = useState(null);
   const [navMode, setNavMode] = useState('hidden'); // 'hidden' | 'preview' | 'active'
   const [isNavigatingLive, setIsNavigatingLive] = useState(false);
-  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(() => isAdminAuthenticated());
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [voiceLang, setVoiceLang] = useState(() => {
     try {
@@ -133,10 +135,14 @@ export function NavigationProvider({ children }) {
   }, [voiceEnabled]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('admin') === 'true') {
-      setIsAdminMode(true);
-    }
+    // Initial sync of persistent server locations
+    syncLocationsFromServer();
+
+    const handleAuthChange = () => {
+      setIsAdminMode(isAdminAuthenticated());
+    };
+    window.addEventListener('csjmu_admin_auth_changed', handleAuthChange);
+    return () => window.removeEventListener('csjmu_admin_auth_changed', handleAuthChange);
   }, []);
 
   return (

@@ -1,3 +1,5 @@
+import { isAdminAuthenticated, apiService } from '../services/api';
+
 export const DEFAULT_CAMPUS_BUILDINGS = {};
 
 /**
@@ -16,9 +18,15 @@ export function getStoredPlottedBuildings() {
 }
 
 /**
- * Save a new user-plotted building
+ * Save a new user-plotted building (Protected: Admin Only)
  */
 export function saveCustomPlottedBuilding(newBuilding) {
+  if (!isAdminAuthenticated()) {
+    console.warn("Security Alert: Unauthorized user attempted to pin a location.");
+    alert("Access Denied: Only authorized University Administrators can pin new locations.");
+    return null;
+  }
+
   const existing = getStoredPlottedBuildings();
 
   const nodeObj = {
@@ -31,8 +39,8 @@ export function saveCustomPlottedBuilding(newBuilding) {
     x: newBuilding.x || Math.round(300 + Math.random() * 200),
     y: newBuilding.y || Math.round(300 + Math.random() * 200),
     floors: newBuilding.floors || 2,
-    description: newBuilding.description || "Custom Plotted University Building",
-    departments: newBuilding.departments || ["Custom Department"],
+    description: newBuilding.description || "Official Plotted University Location",
+    departments: newBuilding.departments || ["General Dept"],
     isCustom: true
   };
 
@@ -40,6 +48,20 @@ export function saveCustomPlottedBuilding(newBuilding) {
   try {
     localStorage.setItem('csjmu_custom_plotted_buildings', JSON.stringify(existing));
     window.dispatchEvent(new CustomEvent('csjmu_locations_updated', { detail: existing }));
+
+    // Persist securely to backend SQLite database using Admin JWT
+    apiService.saveLocation({
+      id: nodeObj.id,
+      name: nodeObj.name,
+      code: nodeObj.code,
+      category: nodeObj.category,
+      lat: nodeObj.lat,
+      lng: nodeObj.lng,
+      x: nodeObj.x,
+      y: nodeObj.y,
+      floors: nodeObj.floors,
+      description: nodeObj.description
+    }).catch(e => console.warn('Backend sync failed:', e));
   } catch (e) {
     console.error(e);
   }
@@ -47,17 +69,27 @@ export function saveCustomPlottedBuilding(newBuilding) {
 }
 
 /**
- * Delete a custom plotted building
+ * Delete a custom plotted building (Protected: Admin Only)
  */
 export function deleteCustomPlottedBuilding(buildingId) {
+  if (!isAdminAuthenticated()) {
+    console.warn("Security Alert: Unauthorized user attempted to delete a location pin.");
+    alert("Access Denied: Only authorized University Administrators can delete location pins.");
+    return false;
+  }
+
   const existing = getStoredPlottedBuildings();
   delete existing[buildingId];
   try {
     localStorage.setItem('csjmu_custom_plotted_buildings', JSON.stringify(existing));
     window.dispatchEvent(new CustomEvent('csjmu_locations_updated', { detail: existing }));
+
+    // Delete securely from backend SQLite database
+    apiService.deleteLocation(buildingId).catch(e => console.warn('Backend delete sync failed:', e));
   } catch (e) {
     console.error(e);
   }
+  return true;
 }
 
 const routeCache = new Map();

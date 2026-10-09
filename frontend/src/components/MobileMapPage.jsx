@@ -3,7 +3,7 @@ import {
   ArrowLeft, Search, MapPin, Navigation, Compass, Layers, 
   Sparkles, Eye, Mic, X, Volume2, VolumeX, Building2,
   ChevronDown, Maximize2, RotateCcw, Languages, Bot,
-  Calendar, Sun, Moon, Share2
+  Calendar, Sun, Moon, Share2, Shield, ShieldCheck
 } from 'lucide-react';
 import DigitalTwinMap from './DigitalTwinMap';
 import NavigationSidebar from './NavigationSidebar';
@@ -35,6 +35,7 @@ export default function MobileMapPage({
   onOpenSchedule,
   onOpenStreetView,
   onOpenAIAssistant,
+  onOpenAdminPanel,
   voiceEnabled: propVoiceEnabled,
   setVoiceEnabled: propSetVoiceEnabled,
   isListening,
@@ -147,7 +148,33 @@ export default function MobileMapPage({
               <Share2 size={15} color="#10B981" />
               <span>Meet Me Here 📍</span>
             </button>
+
+            {onOpenAdminPanel && (
+              <button
+                type="button"
+                className={`desktop-nav-tab ${isAdminMode ? 'admin-active' : ''}`}
+                onClick={onOpenAdminPanel}
+                title={isAdminMode ? "Admin Console: Manage & Pin Locations" : "Admin Portal: Restricted Login"}
+                style={isAdminMode ? { color: '#059669', borderColor: 'rgba(16, 185, 129, 0.4)' } : {}}
+              >
+                {isAdminMode ? <ShieldCheck size={15} color="#059669" /> : <Shield size={15} color="#2563EB" />}
+                <span>{isAdminMode ? 'Admin Console' : 'Admin Login'}</span>
+              </button>
+            )}
           </div>
+
+          {/* Admin Mobile Quick Access Icon */}
+          {onOpenAdminPanel && (
+            <button
+              type="button"
+              className="mobile-header-icon-btn mobile-admin-icon"
+              onClick={onOpenAdminPanel}
+              title={isAdminMode ? "Admin Console" : "Admin Login"}
+              style={isAdminMode ? { color: '#059669', background: 'rgba(16, 185, 129, 0.15)' } : {}}
+            >
+              {isAdminMode ? <ShieldCheck size={18} color="#059669" /> : <Shield size={18} />}
+            </button>
+          )}
 
           {setTheme && (
             <button

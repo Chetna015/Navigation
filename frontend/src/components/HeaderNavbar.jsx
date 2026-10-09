@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   Building2, MapPin, Compass, Layers, Accessibility, 
   AlertTriangle, Sun, Moon, Sparkles, ChevronDown, Calendar,
-  Bot, Volume2, VolumeX
+  Bot, Volume2, VolumeX, Shield, ShieldCheck
 } from 'lucide-react';
 import { getMergedMapLocations } from '../utils/locationStore';
 import { useNavigation } from '../context/NavigationContext';
@@ -20,12 +20,13 @@ export default function HeaderNavbar({
   onStartPinningMode,
   onOpenManagePins,
   onOpenAdmin360,
+  onOpenAdminPanel,
   onOpenSBMIndoor,
   onOpenSchedule,
   onOpenSessions,
   onOpenAIAssistant
 }) {
-  const { voiceEnabled, toggleVoice } = useNavigation();
+  const { voiceEnabled, toggleVoice, isAdminMode } = useNavigation();
   const activeLocations = getMergedMapLocations();
   return (
     <header style={{
@@ -156,6 +157,41 @@ export default function HeaderNavbar({
               }}
             >
               🏢 <span className="btn-label-desktop">SBM Indoor & Watercoolers</span>
+            </button>
+          )}
+
+          {/* Admin Portal & Pinning Console Button */}
+          {onOpenAdminPanel && (
+            <button
+              onClick={onOpenAdminPanel}
+              title={isAdminMode ? "Admin Console: Manage & Pin Locations" : "Admin Portal: Restricted Pin Management"}
+              className="ollama-btn-secondary"
+              style={{
+                padding: '6px 14px',
+                borderRadius: '9999px',
+                color: isAdminMode ? '#059669' : 'var(--colors-ink)',
+                fontWeight: 600,
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                border: isAdminMode ? '1px solid #10B981' : '1px solid var(--colors-hairline-strong)',
+                background: isAdminMode ? 'rgba(16, 185, 129, 0.12)' : 'var(--colors-surface-soft)',
+                cursor: 'pointer',
+                height: '32px'
+              }}
+            >
+              {isAdminMode ? <ShieldCheck size={15} color="#059669" /> : <Shield size={15} color="#2563EB" />}
+              <span className="btn-label-desktop">{isAdminMode ? 'Admin Console' : 'Admin Login'}</span>
+              {isAdminMode && (
+                <span style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: '#10B981',
+                  display: 'inline-block'
+                }} />
+              )}
             </button>
           )}
 

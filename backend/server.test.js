@@ -6,6 +6,18 @@ describe('CSJMU SQLite Backend Database Tests', () => {
     expect(db).toBeDefined();
   });
 
+  it('secures admin credentials with bcrypt hashing', () => {
+    return new Promise((resolve, reject) => {
+      db.get("SELECT password FROM admins WHERE username = 'admin'", [], (err, row) => {
+        if (err) return reject(err);
+        expect(row).toBeDefined();
+        // Verifies password is not stored in plain text and is a valid bcrypt hash
+        expect(row.password.startsWith('$2a$') || row.password.startsWith('$2b$')).toBe(true);
+        resolve();
+      });
+    });
+  });
+
   it('correctly seeds default locations', () => {
     return new Promise((resolve, reject) => {
       db.all("SELECT * FROM locations WHERE id = 'loc_auditorium'", [], (err, rows) => {

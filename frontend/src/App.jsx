@@ -17,6 +17,7 @@ import ParkingFinderModal from './components/ParkingFinderModal';
 import SBMBuildingIndoorModal from './components/SBMBuildingIndoorModal';
 import IndoorBuildingSelectorModal from './components/IndoorBuildingSelectorModal';
 import MeetMeHereModal from './components/MeetMeHereModal';
+import AdminPanelModal from './components/AdminPanelModal';
 import useLiveNavigationVoice from './hooks/useLiveNavigationVoice';
 import { MAP_LOCATIONS, STARTUP_STALLS } from './data/auditoriumData';
 import { useNavigation } from './context/NavigationContext';
@@ -102,6 +103,7 @@ export default function App() {
   const [showSBMIndoorModal, setShowSBMIndoorModal] = useState(false);
   const [showIndoorSelector, setShowIndoorSelector] = useState(false);
   const [indoorBuildingId, setIndoorBuildingId] = useState('sbm'); // 'sbm' | 'auditorium'
+  const [showAdminPanelModal, setShowAdminPanelModal] = useState(false);
   const [editingLocation, setEditingLocation] = useState(null);
   const [selectedStall, setSelectedStall] = useState(null);
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'campus-map'
@@ -404,6 +406,7 @@ export default function App() {
             onOpenIndoor={() => setShowIndoorSelector(true)}
             onOpenStalls={() => setShowStallsModal(true)}
             onOpenAccessibility={() => setShowAccessibilityModal(true)}
+            onOpenAdminPanel={() => setShowAdminPanelModal(true)}
             theme={theme}
             setTheme={setTheme}
             isListening={isListening}
@@ -432,6 +435,7 @@ export default function App() {
             onOpenMeetMe={() => setShowMeetMeModal(true)}
             onOpenSchedule={() => setShowSessionsModal(true)}
             onOpenAIAssistant={() => setShowAIAssistant(true)}
+            onOpenAdminPanel={() => setShowAdminPanelModal(true)}
             navMode={navMode}
             setNavMode={setNavMode}
             isNavigatingLive={isNavigatingLive}
@@ -610,6 +614,20 @@ export default function App() {
           onToggleBookmark={handleToggleBookmark}
         />
       )}
+
+      {/* Official CSJMU Admin Panel Modal (Pin & Manage Locations) */}
+      <AdminPanelModal
+        isOpen={showAdminPanelModal}
+        onClose={() => setShowAdminPanelModal(false)}
+        onStartPinningMode={() => {
+          setCurrentPage('map');
+          setShowAdminPanelModal(false);
+        }}
+        onSelectLocationOnMap={(loc) => {
+          handleSelectLocation(loc);
+          setCurrentPage('map');
+        }}
+      />
     </div>
   );
 }

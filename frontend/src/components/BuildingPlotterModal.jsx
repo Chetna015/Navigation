@@ -46,10 +46,12 @@ export default function BuildingPlotterModal({
       departments: depts
     });
 
-    if (onBuildingPlotted) {
-      onBuildingPlotted(newBuilding);
+    if (newBuilding) {
+      if (onBuildingPlotted) {
+        onBuildingPlotted(newBuilding);
+      }
+      onClose();
     }
-    onClose();
   };
 
   return (

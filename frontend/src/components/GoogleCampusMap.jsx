@@ -5,7 +5,7 @@ import {
   ZoomIn, ZoomOut, Compass, Sparkles, Lock, Plus, MousePointerClick, Layers, Eye, EyeOff, Maximize, Navigation
 } from 'lucide-react';
 import { DEFAULT_CAMPUS_BUILDINGS, getStoredPlottedBuildings, getCampusRoute } from '../utils/pathfinding';
-import { getMergedCampusBuildings } from '../utils/locationStore';
+import { getMergedCampusBuildings, syncLocationsFromServer } from '../utils/locationStore';
 import { DEPARTMENT_AREAS } from '../data/auditoriumData';
 import BuildingPlotterModal from './BuildingPlotterModal';
 import BuildingDetailDrawer from './BuildingDetailDrawer';
@@ -98,6 +98,11 @@ export default function GoogleCampusMap({
   const [customBuildings, setCustomBuildings] = useState(getStoredPlottedBuildings());
   const [locationTick, setLocationTick] = useState(0);
 
+  const isAdminModeRef = useRef(isAdminMode);
+  isAdminModeRef.current = isAdminMode;
+  const isPlottingModeRef = useRef(isPlottingMode);
+  isPlottingModeRef.current = isPlottingMode;
+
   useEffect(() => {
     const handleUpdate = () => setLocationTick(t => t + 1);
     window.addEventListener('csjmu_locations_updated', handleUpdate);
@@ -183,7 +188,7 @@ export default function GoogleCampusMap({
 
       // Attach Map Click listener directly on map creation
       map.on('click', (e) => {
-        if (isAdminMode) {
+        if (isAdminModeRef.current && isPlottingModeRef.current) {
           setClickedLatLng(e.latlng);
           setShowPlotModal(true);
           setIsPlottingMode(false);
@@ -730,6 +735,7 @@ const getPoiCategoryStyle = (node) => {
           onClose={() => setShowPlotModal(false)}
           initialLatLng={clickedLatLng}
           onBuildingPlotted={(bld) => {
+            syncLocationsFromServer();
             setCustomBuildings(getStoredPlottedBuildings());
             setInspectedBuilding(bld);
           }}

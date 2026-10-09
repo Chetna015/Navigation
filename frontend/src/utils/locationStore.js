@@ -1,8 +1,10 @@
 // Location Overrides & Coordinate Management Utility
 import { MAP_LOCATIONS } from '../data/auditoriumData';
 import { DEFAULT_CAMPUS_BUILDINGS, getStoredPlottedBuildings } from './pathfinding';
+import { isAdminAuthenticated, apiService } from '../services/api';
 
 const STORAGE_KEY = 'csjmu_location_latlng_overrides';
+const SERVER_LOCATIONS_KEY = 'csjmu_server_locations';
 
 /**
  * Retrieve all custom location coordinate overrides stored in LocalStorage
@@ -18,9 +20,55 @@ export function getLocationOverrides() {
 }
 
 /**
+ * Retrieve server-synced locations (persisted in DB and cached in localStorage)
+ */
+export function getServerLocations() {
+  try {
+    const raw = localStorage.getItem(SERVER_LOCATIONS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
+ * Save server locations to local cache and trigger reactive re-render
+ */
+export function setCachedServerLocations(locations) {
+  try {
+    localStorage.setItem(SERVER_LOCATIONS_KEY, JSON.stringify(locations || []));
+    window.dispatchEvent(new CustomEvent('csjmu_locations_updated', { detail: locations }));
+  } catch (e) {
+    console.error("Failed to cache server locations", e);
+  }
+}
+
+/**
+ * Fetch latest persistent locations from backend database and sync
+ */
+export async function syncLocationsFromServer() {
+  try {
+    const data = await apiService.getLocations();
+    if (data && data.success && Array.isArray(data.locations)) {
+      setCachedServerLocations(data.locations);
+      return data.locations;
+    }
+  } catch (e) {
+    console.warn("Could not sync locations from server, using cached/local data:", e);
+  }
+  return getServerLocations();
+}
+
+/**
  * Save an updated location override (Lat, Lng, Name, Category, etc.)
+ * Protected: Only Admin can modify coordinates!
  */
 export function saveLocationOverride(id, updatedData) {
+  if (!isAdminAuthenticated()) {
+    console.warn("Unauthorized attempt to override location coordinates. Admin access required.");
+    return null;
+  }
+
   const existing = getLocationOverrides();
   existing[id] = {
     ...existing[id],
@@ -30,7 +78,6 @@ export function saveLocationOverride(id, updatedData) {
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-    // Dispatch window custom event so all listeners/maps reload coordinates in real-time
     window.dispatchEvent(new CustomEvent('csjmu_locations_updated', { detail: existing }));
   } catch (e) {
     console.error("Failed to save location override to LocalStorage", e);
@@ -40,9 +87,10 @@ export function saveLocationOverride(id, updatedData) {
 }
 
 /**
- * Reset a single location back to default coordinates
+ * Reset a single location back to default coordinates (Admin Only)
  */
 export function resetLocationOverride(id) {
+  if (!isAdminAuthenticated()) return;
   const existing = getLocationOverrides();
   delete existing[id];
   try {
@@ -54,9 +102,10 @@ export function resetLocationOverride(id) {
 }
 
 /**
- * Reset ALL location overrides
+ * Reset ALL location overrides (Admin Only)
  */
 export function resetAllLocationOverrides() {
+  if (!isAdminAuthenticated()) return;
   try {
     localStorage.removeItem(STORAGE_KEY);
     window.dispatchEvent(new CustomEvent('csjmu_locations_updated', { detail: {} }));
@@ -80,9 +129,14 @@ export function getDeletedLocationIds() {
 }
 
 /**
- * Mark a location as removed/deleted
+ * Mark a location as removed/deleted (Protected: Admin Only)
  */
 export function hideOrDeleteLocation(id) {
+  if (!isAdminAuthenticated()) {
+    console.warn("Unauthorized attempt to delete/hide location. Only Admin is permitted.");
+    return;
+  }
+
   const deleted = getDeletedLocationIds();
   if (!deleted.includes(id)) {
     deleted.push(id);
@@ -96,9 +150,10 @@ export function hideOrDeleteLocation(id) {
 }
 
 /**
- * Restore all deleted locations
+ * Restore all deleted locations (Admin Only)
  */
 export function restoreAllDeletedLocations() {
+  if (!isAdminAuthenticated()) return;
   try {
     localStorage.removeItem(DELETED_KEY);
     window.dispatchEvent(new CustomEvent('csjmu_locations_updated', { detail: {} }));
@@ -131,29 +186,52 @@ function getSimplifiedKey(name) {
 }
 
 /**
- * Get merged Campus Buildings object using default buildings, user custom pins, and location overrides, minus deleted locations.
+ * Get merged Campus Buildings object using default buildings, server database pins, user custom pins, and location overrides.
  * Ensures duplicate named and duplicate co-located pins are merged into a single unique pinpoint.
  */
 export function getMergedCampusBuildings() {
   const overrides = getLocationOverrides();
   const custom = getStoredPlottedBuildings();
+  const serverLocs = getServerLocations();
   const deleted = getDeletedLocationIds();
 
   const rawList = [];
 
-  // Official primary locations first
+  // 1. Official primary locations
   (MAP_LOCATIONS || []).forEach(loc => {
     if (loc && loc.id) {
       rawList.push({ ...loc });
     }
   });
 
+  // 2. Default campus buildings
   Object.values(DEFAULT_CAMPUS_BUILDINGS || {}).forEach(loc => {
     if (loc && loc.id) {
       rawList.push({ ...loc });
     }
   });
 
+  // 3. Persistent Server Database Locations pinned by Admin
+  (serverLocs || []).forEach(loc => {
+    if (loc && loc.id) {
+      rawList.push({
+        id: loc.id,
+        name: loc.name,
+        code: loc.code || 'BLD-ADM',
+        category: loc.category || 'Campus Facility',
+        lat: parseFloat(loc.lat),
+        lng: parseFloat(loc.lng),
+        floors: parseInt(loc.floors || 2, 10),
+        description: loc.description || 'Official University Location',
+        coverImage: loc.cover_image || null,
+        videoUrl: loc.video_url || null,
+        isCustom: true,
+        isAdminPinned: true
+      });
+    }
+  });
+
+  // 4. Stored local plotted buildings
   Object.values(custom || {}).forEach(loc => {
     if (loc && loc.id) {
       rawList.push({ ...loc, isCustom: true });

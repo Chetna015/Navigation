@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   Search, Mic, MapPin, Navigation, ArrowRight, 
   Sun, Moon, Accessibility, Footprints, X, Star, Building2, Calendar, Sparkles,
-  Bot, Volume2, VolumeX, Home, Map, Share2
+  Bot, Volume2, VolumeX, Home, Map, Share2, Shield, ShieldCheck
 } from 'lucide-react';
 import { getMergedMapLocations } from '../utils/locationStore';
 import { haversineDistanceMeters } from '../utils/haversine';
@@ -25,6 +25,7 @@ export default function HomePage({
   onOpenSessions,
   onOpenStreetView,
   onOpenAccessibility,
+  onOpenAdminPanel,
   theme,
   setTheme,
   isListening,
@@ -33,7 +34,7 @@ export default function HomePage({
   requestLiveGps,
   userPos
 }) {
-  const { voiceEnabled, toggleVoice } = useNavigation();
+  const { voiceEnabled, toggleVoice, isAdminMode } = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -170,7 +171,33 @@ export default function HomePage({
               <Share2 size={15} color="#10B981" />
               <span>Meet Me Here 📍</span>
             </button>
+
+            {onOpenAdminPanel && (
+              <button
+                type="button"
+                className={`desktop-nav-tab ${isAdminMode ? 'admin-active' : ''}`}
+                onClick={onOpenAdminPanel}
+                title={isAdminMode ? "Admin Console: Manage & Pin Locations" : "Admin Portal: Restricted Login"}
+                style={isAdminMode ? { color: '#059669', borderColor: 'rgba(16, 185, 129, 0.4)' } : {}}
+              >
+                {isAdminMode ? <ShieldCheck size={15} color="#059669" /> : <Shield size={15} color="#2563EB" />}
+                <span>{isAdminMode ? 'Admin Console' : 'Admin Login'}</span>
+              </button>
+            )}
           </div>
+
+          {/* Admin Mobile Quick Access Icon */}
+          {onOpenAdminPanel && (
+            <button
+              type="button"
+              className="mobile-header-icon-btn mobile-admin-icon"
+              onClick={onOpenAdminPanel}
+              title={isAdminMode ? "Admin Console" : "Admin Login"}
+              style={isAdminMode ? { color: '#059669', background: 'rgba(16, 185, 129, 0.15)' } : {}}
+            >
+              {isAdminMode ? <ShieldCheck size={18} color="#059669" /> : <Shield size={18} />}
+            </button>
+          )}
 
           {/* Theme Toggle (Mobile & Desktop) */}
           <button
